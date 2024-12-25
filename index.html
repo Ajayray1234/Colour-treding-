@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wingo Lottery Game</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #1e1e1e, #3a3a3a);
+            color: white;
+            text-align: center;
+        }
+        .container {
+            padding: 20px;
+        }
+        .welcome-message {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #00b7ff;
+            margin-bottom: 20px;
+        }
+        .period, .result, .timer {
+            font-size: 1.5rem;
+            margin: 10px 0;
+        }
+        .result.big {
+            color: #28a745;
+        }
+        .result.small {
+            color: #e2008c;
+        }
+        .timer {
+            color: #f0ad4e;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div id="welcomeMessage" class="welcome-message">Welcome to Wingo Lottery Game!</div>
+        <div id="period" class="period"></div>
+        <div id="result" class="result"></div>
+        <div id="timer" class="timer"></div>
+    </div>
+
+    <script>
+        // Base BIG-SMALL pattern
+        const baseResults = ["BIG", "SMALL"];
+
+        /**
+         * Function to enhance the pattern by adding an extra result after every two patterns.
+         * It ensures the pattern dynamically evolves with additional "BIG" results.
+         */
+        function generatePatternWithExtras() {
+            const enhancedResults = [];
+            for (let i = 0; i < baseResults.length; i++) {
+                enhancedResults.push(baseResults[i]);
+                if ((i + 1) % 2 === 0) {
+                    // Add extra pattern after every two patterns
+                    enhancedResults.push("BIG");
+                }
+            }
+            return enhancedResults;
+        }
+
+        const results = generatePatternWithExtras();
+
+        /**
+         * Function to compute period and determine the lottery result based on current UTC time.
+         */
+        function updatePeriodAndResult() {
+            const now = new Date();
+            const year = now.getUTCFullYear();
+            const month = String(now.getUTCMonth() + 1).padStart(2, '0');
+            const day = String(now.getUTCDate()).padStart(2, '0');
+            const hours = now.getUTCHours();
+            const minutes = now.getUTCMinutes();
+            const seconds = now.getUTCSeconds();
+            const remainingSeconds = 60 - seconds;
+
+            const totalMinutes = hours * 60 + minutes;
+            const periodNumber = 10001 + totalMinutes;
+            const periodString = `${year}${month}${day}${periodNumber}`;
+
+            const patternIndex = (periodNumber - 10001) % results.length;
+            const actualResult = results[patternIndex];
+
+            return { periodString, actualResult, remainingSeconds };
+        }
+
+        /**
+         * Timer to count down until the next result.
+         * It updates the UI dynamically to show remaining time.
+         */
+        function countdownTimer(seconds) {
+            const timerElement = document.getElementById("timer");
+            const countdown = setInterval(() => {
+                timerElement.innerHTML = `Next Result In: ${seconds}s`;
+                if (seconds <= 0) {
+                    clearInterval(countdown);
+                    updateUI();
+                } else {
+                    seconds--;
+                }
+            }, 1000);
+        }
+
+        /**
+         * Updates the UI with the latest period, result, and starts the countdown timer.
+         */
+        function updateUI() {
+            const { periodString, actualResult, remainingSeconds } = updatePeriodAndResult();
+
+            document.getElementById("period").innerText = `Period: ${periodString}`;
+
+            const resultElement = document.getElementById("result");
+            resultElement.innerText = actualResult;
+
+            if (actualResult === "BIG") {
+                resultElement.className = "result big";
+            } else {
+                resultElement.className = "result small";
+            }
+
+            countdownTimer(remainingSeconds);
+        }
+
+        // Initialize the UI on page load
+        updateUI();
+    </script>
+</body>
+</html>
